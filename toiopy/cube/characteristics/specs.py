@@ -1,7 +1,16 @@
-from enum import Enum
 from toiopy.data import (
     Buffer,
     DataType,
+    BatteryType,
+    BatteryTypeData,
+    ButtonType,
+    ButtonTypeData,
+    StandardId,
+    PositionIdType,
+    PositionIdInfo,
+    StandardIdType,
+    StandardIdInfo,
+    IdMissedType,
     LightOperation,
     TurnOnLightType,
     TurnOnLightWithScenarioType,
@@ -9,48 +18,23 @@ from toiopy.data import (
     TurnOnLightWithScenarioTypeData,
     MotorResponse,
     MotorResponseData,
-    MoveType
+    MoveType,
+    MoveTypeData,
+    MoveToTarget,
+    MoveToOptions,
+    MoveToType,
+    MoveToTypeData,
+    SensorType,
+    SensorTypeData,
+    SoundOperation,
+    PlayPresetSoundType,
+    PlayPresetSoundTypeData,
+    PlaySoundType,
+    PlaySoundTypeData,
+    StopSoundType,
 )
 from toiopy.cube.util import clamp
 from toiopy.cube.tag import createTagHandler
-
-
-class StandardId(Enum):
-    CARD_TYPHOON = '36700_16'
-    CARD_RUSH = '36700_54'
-    CARD_AUTO_TACKLE = '36700_18'
-    CARD_RANDOM = '36700_56'
-    CARD_TACKLE_POWER_UP = '36700_20'
-    CARD_SWING_POWER_UP = '36700_58'
-    CARD_SIDE_ATTACK = '36700_22'
-    CARD_CHASING = '36700_60'
-
-    CARD_LEFT = '36700_24'
-    CARD_RIGHT = '36700_62'
-    CARD_FRONT = '36700_26'
-    CARD_BACK = '36700_64'
-    CARD_GO = '36700_28'
-
-    SKUNK_BLUE = '36700_78'
-    SKUNK_GREEN = '36700_42'
-    SKUNK_YELLOW = '36700_80'
-    SKUNK_ORANGE = '36700_44'
-    SKUNK_RED = '36700_82'
-    SKUNK_BROWN = '36700_46'
-
-    STICKER_SPEED_UP = '36700_66'
-    STICKER_SPEED_DOWN = '36700_30'
-    STICKER_WOBBLE = '36700_68'
-    STICKER_PANIC = '36700_32'
-    STICKER_SPIN = '36700_70'
-    STICKER_SHOCK = '36700_34'
-
-    MARK_CRAFT_FIGHTER = '36700_48'
-    MARK_RHYTHM_AND_GO = '36700_52'
-    MARK_SKUNK_CHASER = '36700_86'
-    MARK_FINGER_STRIKE = '36700_50'
-    MARK_FINGER_STRIKE_1P = '36700_88'
-    MARK_FREE_MOVE = '36700_84'
 
 
 class BatterySpec:
@@ -61,10 +45,8 @@ class BatterySpec:
             raise Exception("parse error")
 
         level = buffer.read_uint8(0)
-        data = {
-            "level": level
-        }
-        return DataType(buffer, data, 'battery:battery')
+        data = BatteryTypeData(level)
+        return BatteryType(buffer, data, 'battery:battery')
 
 
 class ButtonSpec:
@@ -80,11 +62,8 @@ class ButtonSpec:
             raise Exception("parse error")
 
         pressed = buffer.read_uint8(1) != 0
-        data = {
-            'id': id,
-            'pressed': pressed
-        }
-        return DataType(buffer, data, 'button:press')
+        data = ButtonTypeData(id, pressed)
+        return ButtonType(buffer, data, 'button:press')
 
 
 class IdSpec:
@@ -100,28 +79,28 @@ class IdSpec:
             if buffer.bytelength < 11:
                 raise Exception("parse error")
             else:
-                data = {
-                    'x': buffer.read_uint16le(1),
-                    'y': buffer.read_uint16le(3),
-                    'angle': buffer.read_uint16le(5),
-                    'sensorX': buffer.read_uint16le(7),
-                    'sensorY': buffer.read_uint16le(9)
-                }
-                return DataType(buffer, data, 'id:position-id')
+                data = PositionIdInfo(
+                    buffer.read_uint16le(1),
+                    buffer.read_uint16le(3),
+                    buffer.read_uint16le(5),
+                    buffer.read_uint16le(7),
+                    buffer.read_uint16le(9)
+                )
+                return PositionIdType(buffer, data, 'id:position-id')
         elif data_type == 2:
             if buffer.bytelength < 7:
                 raise Exception("parse error")
             else:
-                data = {
-                    'standardId': buffer.read_uint32le(1),
-                    'angle': buffer.read_uint16le(5)
-                }
-                return DataType(buffer, data, 'id:standard-id')
+                data = StandardIdInfo(
+                    StandardId(buffer.read_uint32le(1)),
+                    buffer.read_uint16le(5)
+                )
+                return StandardIdType(buffer, data, 'id:standard-id')
         elif data_type == 3:
-            return DataType(buffer, data, 'id:position-id-missed')
+            return IdMissedType(buffer, 'id:position-id-missed')
 
         elif data_type == 2:
-            return DataType(buffer, data, 'id:standard-id-missed')
+            return IdMissedType(buffer, data, 'id:standard-id-missed')
         else:
             raise Exception("parse error")
 
@@ -208,3 +187,117 @@ class MotorSpec:
 
         l_direction = 1 if left > 0 else 2
         r_direction = 1 if right > 0 else 2
+
+        l_power = min(abs(left), MotorSpec.MAX_SPEED)
+        r_power = min(abs(right), MotorSpec.MAX_SPEED)
+
+        duration = clamp(duration_ms / 10, 0, 255)
+
+        buffer = Buffer.from_data(
+            [2, 1, l_direction, l_power, 2, r_direction, r_power, duration]
+        )
+
+        data = MoveTypeData(l_sign * l_power, r_sign * r_power, duration * 10)
+        return MoveType(buffer, data)
+
+    def move_to(self, targets: List[MoveToTarget], options: MoveToOptions) -> MoveType:
+
+        operation_id = self.__tag.next()
+        num_targets = min(
+            len(targets), MotorSpec.NUMBER_OF_TARGETS_PER_OPERATION
+        )
+        buffer = Buffer.alloc(8 + 6 * num_targets)
+        buffer.write_uint8(4, 0)
+        buffer.write_uint8(operation_id, 1)
+        buffer.write_uint8(options.timeout, 2)
+        buffer.write_uint8(options.moveType, 3)
+        buffer.write_uint8(options.maxSpeed, 4)
+        buffer.write_uint8(options.speedType, 5)
+        buffer.write_uint8(0, 6)
+        buffer.write_uint8(0 if options.overwrite else 1, 7)
+
+        for i in range(num_targets):
+            target: MoveToTarget = targets[i]
+            x = target.x if target.x is not None else 0xffff
+            y = target.y if target.y is not None else 0xffff
+
+            angle = clamp(
+                target.angle if target.angle is not None else 0, 0, 0x1fff
+            )
+            rotate_type = target.rotate_type if target.rotate_type is not None else 0x00
+
+            if (target.angle is None and target.rotate_type != 0x06):
+                rotate_type = 0x05
+
+            buffer.write_uint16le(x, 8 + 6 * i)
+            buffer.write_uint16le(y, 10 + 6 * i)
+            buffer.write_uint16le(
+                (rotate_type << 13) | angle, 12 + 6 * i)
+
+        options.operation_id = operation_id
+        data = MoveToTypeData(target[0:num_targets], options)
+        return MoveType(buffer, data)
+
+
+class SensorSpec:
+
+    def parse(self, buffer: Buffer) -> MotorResponse:
+
+        if buffer.bytelength < 3:
+            raise Exception("parse error")
+
+        type_data = buffer.read_uint8(0)
+
+        if type_data != 1:
+            raise Exception("parse error")
+
+        is_sloped = buffer.read_uint8(1) == 0
+        is_collision_detected = buffer.read_uint8(2) == 1
+        is_double_tapped = buffer.read_uint8(3) == 1
+        orientation = buffer.read_uint8(4)
+
+        data = SensorTypeData(
+            is_sloped, is_collision_detected, is_double_tapped, orientation
+        )
+
+        return SensorType(buffer, data, 'sensor:detection')
+
+
+class SoundSpec:
+
+    def play_preset_sound(self, sound_id: int) -> PlayPresetSoundType:
+        arranged_sound_id = clamp(sound_id, 0, 10)
+        data = PlayPresetSoundTypeData(sound_id)
+        return PlayPresetSoundType(Buffer.from_data([2, arranged_sound_id, 255]), data)
+
+    def play_sound(self, operations: List[SoundOperation], repeat_count: int) -> PlaySoundType:
+        arrange_data = PlaySoundTypeData([], clamp(repeat_count, 0, 255), 0)
+
+        num_operations = min(len(operations), 59)
+
+        buffer = Buffer.alloc(3 + 3 * num_operations)
+        buffer.write_uint8(3, 0)
+        buffer.write_uint8(arrange_data.repeat_count, 1)
+        buffer.write_uint8(num_operations, 2)
+
+        total_duration_ms = 0
+
+        for i in range(num_operations):
+            operation: SoundOperation = operations[i]
+            duration = clamp(operation.duration_ms / 10, 1, 255)
+            note_name = operation.note_name
+
+            total_duration_ms += duration
+            data = SoundOperation(duration * 10, note_name)
+            arrange_data.operations.append(data)
+
+            buffer.write_uint8(duration, 3 + 3 * i)
+            buffer.write_uint8(note_name, 4 + 3 * i)
+            buffer.write_uint8(255, 5 + 3 * i)
+
+        arrange_data.total_duration_ms = total_duration_ms * 10 * arrange_data.repeat_count
+
+        return PlaySoundType(buffer, arrange_data)
+
+    def stop_sound(self) -> StopSoundType:
+        return StopSoundType(Buffer.from_data([1]))
