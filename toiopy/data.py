@@ -42,136 +42,22 @@ class StandardId(Enum):
     MARK_FREE_MOVE = '36700_84'
 
 
-class Note(Enum):
-    C0 = 0
-    CS0 = auto()
-    D0 = auto()
-    DS0 = auto()
-    E0 = auto()
-    F0 = auto()
-    FS0 = auto()
-    G0 = auto()
-    GS0 = auto()
-    A0 = auto()
-    AS0 = auto()
-    B0 = auto()
-    C1 = auto()
-    CS1 = auto()
-    D1 = auto()
-    DS1 = auto()
-    E1 = auto()
-    F1 = auto()
-    FS1 = auto()
-    G1 = auto()
-    GS1 = auto()
-    A1 = auto()
-    AS1 = auto()
-    B1 = auto()
-    C2 = auto()
-    CS2 = auto()
-    D2 = auto()
-    DS2 = auto()
-    E2 = auto()
-    F2 = auto()
-    FS2 = auto()
-    G2 = auto()
-    GS2 = auto()
-    A2 = auto()
-    AS2 = auto()
-    B2 = auto()
-    C3 = auto()
-    CS3 = auto()
-    D3 = auto()
-    DS3 = auto()
-    E3 = auto()
-    F3 = auto()
-    FS3 = auto()
-    G3 = auto()
-    GS3 = auto()
-    A3 = auto()
-    AS3 = auto()
-    B3 = auto()
-    C4 = auto()
-    CS4 = auto()
-    D4 = auto()
-    DS4 = auto()
-    E4 = auto()
-    F4 = auto()
-    FS4 = auto()
-    G4 = auto()
-    GS4 = auto()
-    A4 = auto()
-    AS4 = auto()
-    B4 = auto()
-    C5 = auto()
-    CS5 = auto()
-    D5 = auto()
-    DS5 = auto()
-    E5 = auto()
-    F5 = auto()
-    FS5 = auto()
-    G5 = auto()
-    GS5 = auto()
-    A5 = auto()
-    AS5 = auto()
-    B5 = auto()
-    C6 = auto()
-    CS6 = auto()
-    D6 = auto()
-    DS6 = auto()
-    E6 = auto()
-    F6 = auto()
-    FS6 = auto()
-    G6 = auto()
-    GS6 = auto()
-    A6 = auto()
-    AS6 = auto()
-    B6 = auto()
-    C7 = auto()
-    CS7 = auto()
-    D7 = auto()
-    DS7 = auto()
-    E7 = auto()
-    F7 = auto()
-    FS7 = auto()
-    G7 = auto()
-    GS7 = auto()
-    A7 = auto()
-    AS7 = auto()
-    B7 = auto()
-    C8 = auto()
-    CS8 = auto()
-    D8 = auto()
-    DS8 = auto()
-    E8 = auto()
-    F8 = auto()
-    FS8 = auto()
-    G8 = auto()
-    GS8 = auto()
-    A8 = auto()
-    AS8 = auto()
-    B8 = auto()
-    C9 = auto()
-    CS9 = auto()
-    D9 = auto()
-    DS9 = auto()
-    E9 = auto()
-    F9 = auto()
-    FS9 = auto()
-    G9 = auto()
-    GS9 = auto()
-    A9 = auto()
-    AS9 = auto()
-    B9 = auto()
-    C10 = auto()
-    CS10 = auto()
-    D10 = auto()
-    DS10 = auto()
-    E10 = auto()
-    F10 = auto()
-    FS10 = auto()
-    G10 = auto()
-    NO_SOUND = auto()
+names = """
+C0,CS0,D0,DS0,E0,F0,FS0,G0,GS0,A0,AS0,B0,
+C1,CS1,D1,DS1,E1,F1,FS1,G1,GS1,A1,AS1,B1,
+C2,CS2,D2,DS2,E2,F2,FS2,G2,GS2,A2,AS2,B2,
+C3,CS3,D3,DS3,E3,F3,FS3,G3,GS3,A3,AS3,B3,
+C4,CS4,D4,DS4,E4,F4,FS4,G4,GS4,A4,AS4,B4,
+C5,CS5,D5,DS5,E5,F5,FS5,G5,GS5,A5,AS5,B5,
+C6,CS6,D6,DS6,E6,F6,FS6,G6,GS6,A6,AS6,B6,
+C7,CS7,D7,DS7,E7,F7,FS7,G7,GS7,A7,AS7,B7,
+C8,CS8,D8,DS8,E8,F8,FS8,G8,GS8,A8,AS8,B8,
+C9,CS9,D9,DS9,E9,F9,FS9,G9,GS9,A9,AS9,B9,
+C10,CS10,D10,DS10,E10,F10,FS10,G10,
+NO_SOUND
+"""
+Note = Enum('Note', names.replace('\n', ''), module=__name__,
+            qualname='toiopy.data.Note', start=0)
 
 
 class Buffer:
@@ -318,7 +204,7 @@ class SensorTypeData:
 
 class SoundOperation:
 
-    def __init__(self, duration_ms: int, note_name: Note):
+    def __init__(self, duration_ms: int, note_name):
         self.duration_ms = duration_ms
         self.note_name = note_name
 
