@@ -91,6 +91,9 @@ class Buffer:
     def write_uint16le(self, value: int, offset: int):
         return pack_into('<H', self.__byte_data, offset, value)
 
+    def to_str(self, encoding: str = 'utf-8', start: int = 0, end: int = self.bytelength):
+        return self.__byte_data[start:end].decode(encoding)
+
     @classmethod
     def alloc(cls, size: int):
         return cls(bytearray(size))
