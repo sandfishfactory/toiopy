@@ -67,10 +67,14 @@ class Buffer:
         # 8bit符号なし整数（unsigned char）
         self.bytelength = len(byte_data)
 
+    @property
+    def byte_data(self):
+        return bytearray(self.__byte_data)
+
     @classmethod
     def from_data(cls, data_array: List):
         size = len(data_array)
-        byte_data = pack('B'*size, *data_array)
+        byte_data = pack('B' * size, *data_array)
         return cls(byte_data)
 
     def read_uint8(self, offset: int):
