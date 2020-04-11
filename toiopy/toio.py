@@ -2,7 +2,7 @@ from uuid import UUID
 from typing import Optional, List
 from time import sleep
 
-from pyee import EventEmitter
+from pyee import BaseEventEmitter
 from Adafruit_BluefruitLE.interfaces.device import Device
 from Adafruit_BluefruitLE.interfaces.gatt import GattService, GattCharacteristic
 
@@ -31,7 +31,7 @@ class Cube:
 
     def __init__(self, peripheral: Device):
         self.__peripheral: Device = peripheral
-        self.__event_emitter: EventEmitter = EventEmitter()
+        self.__event_emitter: BaseEventEmitter = BaseEventEmitter()
 
         self.__motor_characteristic: Optional[MotorCharacteristic] = None
         self.__light_characteristic: Optional[LightCharacteristic] = None
@@ -50,11 +50,11 @@ class Cube:
             self.__peripheral.connect()
             self.__peripheral.discover(self.__services, self.__characteristics)
             service: GattService = self.__peripheral.find_service(
-                TOIO_SERVICE_ID
+                Cube.TOIO_SERVICE_ID
             )
 
-            characteristics: List[GattCharacteristic] = service.list_characteristics(
-            )
+            characteristics: List[GattCharacteristic] = \
+                service.list_characteristics()
             if characteristics:
                 self.__set_characteristics(characteristics)
 

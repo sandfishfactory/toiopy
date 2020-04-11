@@ -2,6 +2,7 @@ from typing import List
 
 from toiopy.data import (
     Buffer,
+    DataType,
     BatteryType,
     BatteryTypeData,
     ButtonType,
@@ -33,6 +34,7 @@ from toiopy.data import (
     PlaySoundType,
     PlaySoundTypeData,
     StopSoundType,
+    ToioException,
 )
 from toiopy.cube.util import clamp
 from toiopy.cube.tag import createTagHandler
@@ -43,7 +45,7 @@ class BatterySpec:
     def parse(self, buffer: Buffer) -> BatteryType:
 
         if buffer.bytelength < 1:
-            raise Exception("parse error")
+            raise ToioException("parse error")
 
         level = buffer.read_uint8(0)
         data = BatteryTypeData(level)
@@ -55,12 +57,12 @@ class ButtonSpec:
     def parse(self, buffer: Buffer) -> ButtonType:
 
         if buffer.bytelength < 2:
-            raise Exception("parse error")
+            raise ToioException("parse error")
 
         id = buffer.read_uint8(0)
 
         if id != 1:
-            raise Exception("parse error")
+            raise ToioException("parse error")
 
         pressed = buffer.read_uint8(1) != 0
         data = ButtonTypeData(id, pressed)
@@ -72,13 +74,13 @@ class IdSpec:
     def parse(self, buffer: Buffer) -> DataType:
 
         if buffer.bytelength < 1:
-            raise Exception("parse error")
+            raise ToioException("parse error")
 
         data_type = buffer.read_uint8(0)
 
         if data_type == 1:
             if buffer.bytelength < 11:
-                raise Exception("parse error")
+                raise ToioException("parse error")
             else:
                 data = PositionIdInfo(
                     buffer.read_uint16le(1),
@@ -90,7 +92,7 @@ class IdSpec:
                 return PositionIdType(buffer, data, 'id:position-id')
         elif data_type == 2:
             if buffer.bytelength < 7:
-                raise Exception("parse error")
+                raise ToioException("parse error")
             else:
                 data = StandardIdInfo(
                     StandardId(buffer.read_uint32le(1)),
@@ -103,7 +105,7 @@ class IdSpec:
         elif data_type == 2:
             return IdMissedType(buffer, data, 'id:standard-id-missed')
         else:
-            raise Exception("parse error")
+            raise ToioException("parse error")
 
 
 class LightSpec:
@@ -170,7 +172,7 @@ class MotorSpec:
     def parse(self, buffer: Buffer) -> MotorResponse:
 
         if buffer.bytelength != 3:
-            raise Exception("parse error")
+            raise ToioException("parse error")
 
         type_data = buffer.readUInt8(0)
 
@@ -180,7 +182,7 @@ class MotorSpec:
             )
             return MotorResponse(buffer, data)
         else:
-            raise Exception("parse error")
+            raise ToioException("parse error")
 
     def move(self, left: int, right: int, duration_ms: int = 0) -> MoveType:
         l_sign = 1 if left > 0 else - 1
@@ -245,12 +247,12 @@ class SensorSpec:
     def parse(self, buffer: Buffer) -> SensorType:
 
         if buffer.bytelength < 3:
-            raise Exception("parse error")
+            raise ToioException("parse error")
 
         type_data = buffer.read_uint8(0)
 
         if type_data != 1:
-            raise Exception("parse error")
+            raise ToioException("parse error")
 
         is_sloped = buffer.read_uint8(1) == 0
         is_collision_detected = buffer.read_uint8(2) == 1

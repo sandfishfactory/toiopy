@@ -5,41 +5,41 @@ from enum import Enum, auto
 
 
 class StandardId(Enum):
-    CARD_TYPHOON = '36700_16'
-    CARD_RUSH = '36700_54'
-    CARD_AUTO_TACKLE = '36700_18'
-    CARD_RANDOM = '36700_56'
-    CARD_TACKLE_POWER_UP = '36700_20'
-    CARD_SWING_POWER_UP = '36700_58'
-    CARD_SIDE_ATTACK = '36700_22'
-    CARD_CHASING = '36700_60'
+    CARD_TYPHOON = 3670016
+    CARD_RUSH = 3670054
+    CARD_AUTO_TACKLE = 3670018
+    CARD_RANDOM = 3670056
+    CARD_TACKLE_POWER_UP = 3670020
+    CARD_SWING_POWER_UP = 3670058
+    CARD_SIDE_ATTACK = 3670022
+    CARD_CHASING = 3670060
 
-    CARD_LEFT = '36700_24'
-    CARD_RIGHT = '36700_62'
-    CARD_FRONT = '36700_26'
-    CARD_BACK = '36700_64'
-    CARD_GO = '36700_28'
+    CARD_LEFT = 3670024
+    CARD_RIGHT = 3670062
+    CARD_FRONT = 3670026
+    CARD_BACK = 3670064
+    CARD_GO = 3670028
 
-    SKUNK_BLUE = '36700_78'
-    SKUNK_GREEN = '36700_42'
-    SKUNK_YELLOW = '36700_80'
-    SKUNK_ORANGE = '36700_44'
-    SKUNK_RED = '36700_82'
-    SKUNK_BROWN = '36700_46'
+    SKUNK_BLUE = 3670078
+    SKUNK_GREEN = 3670042
+    SKUNK_YELLOW = 3670080
+    SKUNK_ORANGE = 3670044
+    SKUNK_RED = 3670082
+    SKUNK_BROWN = 3670046
 
-    STICKER_SPEED_UP = '36700_66'
-    STICKER_SPEED_DOWN = '36700_30'
-    STICKER_WOBBLE = '36700_68'
-    STICKER_PANIC = '36700_32'
-    STICKER_SPIN = '36700_70'
-    STICKER_SHOCK = '36700_34'
+    STICKER_SPEED_UP = 3670066
+    STICKER_SPEED_DOWN = 3670030
+    STICKER_WOBBLE = 3670068
+    STICKER_PANIC = 3670032
+    STICKER_SPIN = 3670070
+    STICKER_SHOCK = 3670034
 
-    MARK_CRAFT_FIGHTER = '36700_48'
-    MARK_RHYTHM_AND_GO = '36700_52'
-    MARK_SKUNK_CHASER = '36700_86'
-    MARK_FINGER_STRIKE = '36700_50'
-    MARK_FINGER_STRIKE_1P = '36700_88'
-    MARK_FREE_MOVE = '36700_84'
+    MARK_CRAFT_FIGHTER = 3670048
+    MARK_RHYTHM_AND_GO = 3670052
+    MARK_SKUNK_CHASER = 3670086
+    MARK_FINGER_STRIKE = 3670050
+    MARK_FINGER_STRIKE_1P = 3670088
+    MARK_FREE_MOVE = 3670084
 
 
 names = """
@@ -95,7 +95,11 @@ class Buffer:
     def write_uint16le(self, value: int, offset: int):
         return pack_into('<H', self.__byte_data, offset, value)
 
-    def to_str(self, encoding: str = 'utf-8', start: int = 0, end: int = self.bytelength):
+    def to_str(self, encoding: str = 'utf-8', start: int = 0, end: Optional[int] = None):
+
+        if end is None:
+            end = self.bytelength
+
         return self.__byte_data[start:end].decode(encoding)
 
     @classmethod
@@ -103,9 +107,13 @@ class Buffer:
         return cls(bytearray(size))
 
 
+class ToioException(Exception):
+    pass
+
+
 class DataType:
 
-    def __init__(self, buffer: Uint8Array, data: Any = None, data_type: str = ''):
+    def __init__(self, buffer: Buffer, data: Any = None, data_type: str = ''):
         self.buffer = buffer
         self.data = data
         self.data_type = data_type
@@ -238,7 +246,7 @@ class BatteryType(DataType):
         self.data_type = data_type
 
 
-class ButtonType(DataTye):
+class ButtonType(DataType):
 
     def __init__(self, buffer: Buffer, data: ButtonTypeData, data_type: str):
         self.buffer = buffer
