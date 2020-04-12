@@ -145,6 +145,8 @@ class Cube:
 
     def __init_characteristics(self, ble_protocol_version: str):
         if self.__motor_characteristic:
+            print("##### __init_characteristics __motor_characteristic ######")
             self.__motor_characteristic.init(ble_protocol_version)
         if self.__configuration_characteristic:
+            print("##### __init_characteristics __configuration_characteristic ######")
             self.__configuration_characteristic.init(ble_protocol_version)

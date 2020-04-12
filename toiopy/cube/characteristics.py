@@ -57,7 +57,8 @@ class BatteryCharacteristic:
 
     def __on_data(self, data):
         try:
-            parsed_data: BatteryType = self.__spec.parse(data)
+            buffer = Buffer.from_data(data)
+            parsed_data: BatteryType = self.__spec.parse(buffer)
             self.__event_emitter.emit('battery:battery', parsed_data.data)
         except Exception as e:
             print(e)
@@ -90,7 +91,8 @@ class ButtonCharacteristic:
 
     def __on_data(self, data):
         try:
-            parsed_data: ButtonType = self.__spec.parse(data)
+            buffer = Buffer.from_data(data)
+            parsed_data: ButtonType = self.__spec.parse(buffer)
             self.__event_emitter.emit('button:press', parsed_data.data)
         except Exception as e:
             print(e)
@@ -128,6 +130,8 @@ class ConfigurationCharacteristic:
 
     def init(self, ble_protocol_version: str):
         self.__ble_protocol_version = ble_protocol_version
+        print("##### ConfigurationCharacteristic init {0} #####".format(
+            ble_protocol_version))
 
     def once_data(self, version):
         print("##### ConfigurationCharacteristic once_data #####")
@@ -162,12 +166,11 @@ class ConfigurationCharacteristic:
             Buffer.from_data([0x06, 0x00, threshold]).byte_data
         )
 
-    def __data2result(self, data: bytearray):
+    def __data2result(self, data: Buffer):
         print("##### ConfigurationCharacteristic __data2result #####")
-        buffer = Buffer.from_data(data)
-        type_data = buffer.read_uint8(0)
+        type_data = data.read_uint8(0)
         if type_data == 0x81:
-            version = buffer.to_str('utf-8', start=2, end=7)
+            version = data.to_str('utf-8', start=2, end=7)
             print("##### ConfigurationCharacteristic __queue.put #####")
             self.__event_emitter.emit(
                 'configuration:ble-protocol-version', version)
@@ -177,7 +180,8 @@ class ConfigurationCharacteristic:
     def __on_data(self, data):
         print("##### ConfigurationCharacteristic __on_data #####")
         print("data: {0}".format(data))
-        self.__data2result(data)
+        buffer = Buffer.from_data(data)
+        self.__data2result(buffer)
 
 
 class IdCharacteristic:
