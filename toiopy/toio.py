@@ -2,10 +2,10 @@ from uuid import UUID
 from typing import Optional, List
 from time import sleep
 
-from pyee import BaseEventEmitter
 from Adafruit_BluefruitLE.interfaces.device import Device
 from Adafruit_BluefruitLE.interfaces.gatt import GattService, GattCharacteristic
 
+from toiopy.data import ToioException, ToioEventEmitter
 from toiopy.cube.characteristics import (
     BatteryCharacteristic,
     ButtonCharacteristic,
@@ -24,14 +24,21 @@ class Cube:
 
     __services = [TOIO_SERVICE_ID]
     __characteristics = [
-        BatteryCharacteristic.UUID
+        BatteryCharacteristic.UUID,
+        ButtonCharacteristic.UUID,
+        ConfigurationCharacteristic.UUID,
+        IdCharacteristic.UUID,
+        LightCharacteristic.UUID,
+        MotorCharacteristic.UUID,
+        SensorCharacteristic.UUID,
+        SoundCharacteristic.UUID
     ]
 
     __battery_characteristic: Optional[BatteryCharacteristic] = None
 
     def __init__(self, peripheral: Device):
         self.__peripheral: Device = peripheral
-        self.__event_emitter: BaseEventEmitter = BaseEventEmitter()
+        self.__event_emitter: ToioEventEmitter = ToioEventEmitter()
 
         self.__motor_characteristic: Optional[MotorCharacteristic] = None
         self.__light_characteristic: Optional[LightCharacteristic] = None
@@ -47,46 +54,80 @@ class Cube:
 
     def connect(self):
         try:
-            print("##### connect ######")
             self.__peripheral.connect()
-            print("##### discover ######")
             self.__peripheral.discover(self.__services, self.__characteristics)
-            print("##### find_service ######")
             service: GattService = self.__peripheral.find_service(
                 Cube.TOIO_SERVICE_ID
             )
-            print("##### list_characteristics ######")
             characteristics: List[GattCharacteristic] = \
                 service.list_characteristics()
             if characteristics:
-                print("##### __set_characteristics ######")
                 self.__set_characteristics(characteristics)
 
-            print("##### get_ble_protocol_version ######")
             ble_protocol_version = self.get_ble_protocol_version()
-
-            print("##### __init_characteristics ######")
             self.__init_characteristics(ble_protocol_version)
+            print("connected")
 
         except Exception as e:
             print(e)
-            return None
+
+            if self.__peripheral and self.__peripheral.is_connected:
+                self.__peripheral.disconnect()
+        finally:
+            return self
 
     def disconnect(self):
-        sleep(10)
-        self.__peripheral.disconnect()
+        if self.__peripheral.is_connected:
+            self.__peripheral.disconnect()
 
     def on(self, event: str, listener):
+        print("##### on ##### {0}".format(event))
         self.__event_emitter.on(event, listener)
+        return self
 
     def off(self, event: str, listener):
         self.__event_emitter.remove_listener(event, listener)
+        return self
 
+    # ID Detection
+
+    # Motor Control
+    def move(self, left: int, right: int, duration: int):
+        if self.__motor_characteristic:
+            self.__motor_characteristic.move(left, right, duration)
+
+    def stop(self):
+        if self.__motor_characteristic:
+            self.__motor_characteristic.stop()
+
+    # button
+    def get_button_status(self):
+        if self.__button_characteristic:
+            return self.__button_characteristic.get_button_status()
+        else:
+            raise ToioException("button_characteristic is null")
+
+    # battery
+    def get_battery_status(self):
+        if self.__battery_characteristic:
+            return self.__battery_characteristic.get_battery_status()
+        else:
+            raise ToioException("battery_characteristic is null")
+
+    # configuration
     def get_ble_protocol_version(self):
         if self.__configuration_characteristic:
             return self.__configuration_characteristic.get_ble_protocol_version()
         else:
-            raise Exception('')
+            raise ToioException("configuration_characteristic is null")
+
+    def set_collision_threshold(self, threshold: int):
+        if self.__configuration_characteristic:
+            self.__configuration_characteristic.set_collision_threshold(
+                threshold
+            )
+        else:
+            raise ToioException("configuration_characteristic is null")
 
     def __set_characteristics(self, characteristics: List[GattCharacteristic]):
 
@@ -94,24 +135,28 @@ class Cube:
             if IdCharacteristic.UUID == characteristic.uuid:
 
                 IdCharacteristic(characteristic, self.__event_emitter)
+                print("set IdCharacteristic")
 
             elif MotorCharacteristic.UUID == characteristic.uuid:
-
+                characteristic._peripheral = self.__peripheral
                 self.__motor_characteristic = MotorCharacteristic(
                     characteristic
                 )
+                print("set MotorCharacteristic")
 
             elif LightCharacteristic.UUID == characteristic.uuid:
 
                 self.__light_characteristic = LightCharacteristic(
                     characteristic
                 )
+                print("set LightCharacteristic")
 
             elif SoundCharacteristic.UUID == characteristic.uuid:
 
                 self.__sound_characteristic = SoundCharacteristic(
                     characteristic
                 )
+                print("set SoundCharacteristic")
 
             elif SensorCharacteristic.UUID == characteristic.uuid:
 
@@ -119,6 +164,7 @@ class Cube:
                     characteristic,
                     self.__event_emitter
                 )
+                print("set SensorCharacteristic")
 
             elif ButtonCharacteristic.UUID == characteristic.uuid:
 
@@ -126,6 +172,7 @@ class Cube:
                     characteristic,
                     self.__event_emitter
                 )
+                print("set ButtonCharacteristic")
 
             elif BatteryCharacteristic.UUID == characteristic.uuid:
 
@@ -133,12 +180,14 @@ class Cube:
                     characteristic,
                     self.__event_emitter
                 )
+                print("set BatteryCharacteristic")
 
             elif ConfigurationCharacteristic.UUID == characteristic.uuid:
 
                 self.__configuration_characteristic = ConfigurationCharacteristic(
                     characteristic
                 )
+                print("set ConfigurationCharacteristic")
 
             else:
                 pass

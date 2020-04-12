@@ -1,11 +1,10 @@
 from abc import ABC, abstractmethod
 
-from pyee import BaseEventEmitter
 import Adafruit_BluefruitLE
 from Adafruit_BluefruitLE.interfaces.device import Device
 
 from toiopy.toio import Cube
-from toiopy.data import ToioException
+from toiopy.data import ToioException, ToioEventEmitter
 
 
 class Scanner(ABC):
@@ -13,7 +12,7 @@ class Scanner(ABC):
 
     def __init__(self, provider, timeout_ms: int = DEFAULT_TIMEOUT_MS):
         self.__timout_ms = timeout_ms
-        self.__event_emitter: BaseEventEmitter = BaseEventEmitter()
+        self.__event_emitter: ToioEventEmitter = ToioEventEmitter()
 
         self.__provider = provider
         self.__devices = None

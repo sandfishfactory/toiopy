@@ -2,6 +2,8 @@ from typing import List, Any, Optional
 from struct import unpack_from, pack, pack_into
 from abc import ABCMeta
 from enum import Enum, auto
+from pyee import BaseEventEmitter
+from queue import Queue
 
 
 class StandardId(Enum):
@@ -109,6 +111,19 @@ class Buffer:
 
 class ToioException(Exception):
     pass
+
+
+class ToioEventEmitter(BaseEventEmitter):
+
+    def __init__(self):
+        super(ToioEventEmitter, self).__init__()
+        self.__queue = Queue()
+
+    def put(self, item, block=True, timeout=0):
+        self.__queue.put(item, block, timeout)
+
+    def get(self, block=True, timeout=0):
+        return self.__queue.get(block, timeout)
 
 
 class DataType:

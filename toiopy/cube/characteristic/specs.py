@@ -195,7 +195,6 @@ class MotorSpec:
         r_power = min(abs(right), MotorSpec.MAX_SPEED)
 
         duration = clamp(duration_ms / 10, 0, 255)
-
         buffer = Buffer.from_data(
             [2, 1, l_direction, l_power, 2, r_direction, r_power, duration]
         )
