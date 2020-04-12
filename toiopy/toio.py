@@ -47,19 +47,25 @@ class Cube:
 
     def connect(self):
         try:
+            print("##### connect ######")
             self.__peripheral.connect()
+            print("##### discover ######")
             self.__peripheral.discover(self.__services, self.__characteristics)
+            print("##### find_service ######")
             service: GattService = self.__peripheral.find_service(
                 Cube.TOIO_SERVICE_ID
             )
-
+            print("##### list_characteristics ######")
             characteristics: List[GattCharacteristic] = \
                 service.list_characteristics()
             if characteristics:
+                print("##### __set_characteristics ######")
                 self.__set_characteristics(characteristics)
 
+            print("##### get_ble_protocol_version ######")
             ble_protocol_version = self.get_ble_protocol_version()
 
+            print("##### __init_characteristics ######")
             self.__init_characteristics(ble_protocol_version)
 
         except Exception as e:
