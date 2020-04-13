@@ -115,14 +115,16 @@ class ToioException(Exception):
 
 class ToioEventEmitter(BaseEventEmitter):
 
+    __TIMEOUT_SEC = 3
+
     def __init__(self):
         super(ToioEventEmitter, self).__init__()
         self.__queue = Queue()
 
-    def put(self, item, block=True, timeout=0):
+    def put(self, item, block=True, timeout=__TIMEOUT_SEC):
         self.__queue.put(item, block, timeout)
 
-    def get(self, block=True, timeout=0):
+    def get(self, block=True, timeout=__TIMEOUT_SEC):
         return self.__queue.get(block, timeout)
 
 

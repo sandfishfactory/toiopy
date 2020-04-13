@@ -149,7 +149,6 @@ class ConfigurationCharacteristic:
             self.__event_emitter.once(
                 'configuration:ble-protocol-version', self.once_data
             )
-            time.sleep(2)
             return_value = self.__event_emitter.get()
             return return_value
 
