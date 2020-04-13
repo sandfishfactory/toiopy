@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 import Adafruit_BluefruitLE
 from Adafruit_BluefruitLE.interfaces.device import Device
 
-from toiopy.toio import Cube
+from toiopy.cube import Cube
 from toiopy.data import ToioException, ToioEventEmitter
 
 

@@ -36,8 +36,8 @@ from toiopy.data import (
     StopSoundType,
     ToioException,
 )
-from toiopy.cube.util import clamp
-from toiopy.cube.tag import createTagHandler
+from toiopy.util import clamp
+from toiopy.tag import createTagHandler
 
 
 class BatterySpec:

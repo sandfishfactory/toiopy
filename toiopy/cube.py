@@ -6,7 +6,7 @@ from Adafruit_BluefruitLE.interfaces.device import Device
 from Adafruit_BluefruitLE.interfaces.gatt import GattService, GattCharacteristic
 
 from toiopy.data import ToioException, ToioEventEmitter
-from toiopy.cube.characteristics import (
+from toiopy.characteristics import (
     BatteryCharacteristic,
     ButtonCharacteristic,
     ConfigurationCharacteristic,

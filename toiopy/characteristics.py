@@ -5,7 +5,7 @@ from typing import List, Optional
 
 from Adafruit_BluefruitLE.interfaces.gatt import GattCharacteristic
 
-from toiopy.cube.characteristic.specs import (
+from toiopy.characteristic.specs import (
     BatterySpec,
     ButtonSpec,
     IdSpec,
@@ -49,7 +49,7 @@ from toiopy.data import (
     PlaySoundTypeData,
     StopSoundType,
 )
-from toiopy.cube.util import set_timeout, clear_timeout
+from toiopy.util import set_timeout, clear_timeout
 
 
 class BatteryCharacteristic:
