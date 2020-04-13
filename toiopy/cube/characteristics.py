@@ -128,7 +128,6 @@ class ConfigurationCharacteristic:
     def __init__(self, characteristic):
         self.__characteristic: GattCharacteristic = characteristic
         self.__characteristic.start_notify(self.__on_data)
-        time.sleep(1)
         self.__ble_protocol_version: Optional[str] = None
         self.__event_emitter: ToioEventEmitter = ToioEventEmitter()
 
@@ -150,6 +149,7 @@ class ConfigurationCharacteristic:
             self.__event_emitter.once(
                 'configuration:ble-protocol-version', self.once_data
             )
+            time.sleep(2)
             return_value = self.__event_emitter.get()
             return return_value
 
@@ -227,8 +227,6 @@ class MotorCharacteristic:
             self.__timer = None
 
         data = self.__spec.move(left, right, duration_ms)
-        print("__characteristic {0}".format(vars(self.__characteristic)))
-        print("byte_data {0}".format(data.buffer.byte_data))
         self.__characteristic.write_value(data.buffer.byte_data)
 
         if (data.data.duration_ms > 0):
