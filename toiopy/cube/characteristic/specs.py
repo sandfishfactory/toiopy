@@ -43,7 +43,6 @@ from toiopy.cube.tag import createTagHandler
 class BatterySpec:
 
     def parse(self, buffer: Buffer) -> BatteryType:
-        print("BatterySpec")
         if buffer.bytelength < 1:
             raise ToioException("parse error")
 
@@ -55,7 +54,6 @@ class BatterySpec:
 class ButtonSpec:
 
     def parse(self, buffer: Buffer) -> ButtonType:
-        print("ButtonSpec")
         if buffer.bytelength < 2:
             raise ToioException("parse error")
 
@@ -72,7 +70,6 @@ class ButtonSpec:
 class IdSpec:
 
     def parse(self, buffer: Buffer) -> DataType:
-        print("IdSpec")
         if buffer.bytelength < 1:
             raise ToioException("parse error")
 
@@ -170,7 +167,6 @@ class MotorSpec:
         self.__tag = createTagHandler()
 
     def parse(self, buffer: Buffer) -> MotorResponse:
-        print("MotorSpec")
         if buffer.bytelength != 3:
             raise ToioException("parse error")
 
@@ -244,7 +240,6 @@ class MotorSpec:
 class SensorSpec:
 
     def parse(self, buffer: Buffer) -> SensorType:
-        print("SensorSpec")
         if buffer.bytelength < 3:
             raise ToioException("parse error")
 

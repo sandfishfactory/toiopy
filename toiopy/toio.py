@@ -79,6 +79,9 @@ class Cube:
     def disconnect(self):
         if self.__peripheral.is_connected:
             self.__peripheral.disconnect()
+            print("-------------------------------------")
+            print("disconnect")
+            print("-------------------------------------")
 
     def on(self, event: str, listener):
         self.__event_emitter.on(event, listener)
