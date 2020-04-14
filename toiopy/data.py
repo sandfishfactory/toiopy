@@ -227,7 +227,13 @@ class MoveToTypeData:
 
 class SensorTypeData:
 
-    def __init__(self, is_sloped: bool, is_collision_detected: bool, is_double_tapped: bool, orientation: int):
+    def __init__(
+        self,
+        is_sloped: Optional[bool] = None,
+        is_collision_detected: Optional[bool] = None,
+        is_double_tapped: Optional[bool] = None,
+        orientation: Optional[int] = None
+    ):
         self.is_sloped = is_sloped
         self.is_collision_detected = is_collision_detected
         self.is_double_tapped = is_double_tapped

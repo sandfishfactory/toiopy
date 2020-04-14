@@ -17,6 +17,7 @@ from toiopy.characteristic.specs import (
 from toiopy.data import (
     Buffer,
     ToioEventEmitter,
+    ToioException,
     BatteryType,
     BatteryTypeData,
     ButtonType,
@@ -58,7 +59,6 @@ class BatteryCharacteristic:
     def __init__(self, characteristic, event_emitter):
         self.__characteristic: GattCharacteristic = characteristic
         self.__characteristic.start_notify(self.__on_data)
-        time.sleep(1)
         self.__event_emitter: EventEmitter = event_emitter
         self.__spec: BatterySpec = BatterySpec()
 
@@ -76,7 +76,7 @@ class BatteryCharacteristic:
 
     def __read(self) -> BatteryType:
         try:
-            data: BatteryType = self.__characteristic.read_value()
+            data = self.__characteristic.read_value()
 
             if not data:
                 return None
@@ -110,7 +110,7 @@ class ButtonCharacteristic:
 
     def __read(self) -> ButtonType:
         try:
-            data: ButtonType = self.__characteristic.read_value()
+            data = self.__characteristic.read_value()
 
             if not data:
                 return None
@@ -177,7 +177,6 @@ class IdCharacteristic:
     def __init__(self, characteristic, eventEmitter):
         self.__characteristic: GattCharacteristic = characteristic
         self.__characteristic.start_notify(self.__on_data)
-        time.sleep(1)
         self.__event_emitter = eventEmitter
 
     def __on_data(self, data):
@@ -202,6 +201,48 @@ class LightCharacteristic:
 
     def __init__(self, characteristic):
         self.__characteristic: GattCharacteristic = characteristic
+        self.__spec: LightSpec = LightSpec()
+        self.__timer = None
+
+    def turn_on_light(self, operation: LightOperation):
+
+        if self.__timer:
+            clear_timeout(self.__timer)
+            self.__timer = None
+
+        data = self.__spec.turn_on_light(operation)
+        self.__characteristic.write_value(data.buffer.byte_data)
+
+        if (data.data.duration_ms > 0):
+            self.__timer = set_timeout(lambda: None, data.data.duration_ms)
+
+    def turn_on_light_with_scenario(self, operations: List[LightOperation], repeat_count: int = 0):
+
+        if not operations:
+            raise ToioException('invalid argument: empty operation')
+
+        if self.__timer:
+            clear_timeout(self.__timer)
+            self.__timer = None
+
+        data = self.__spec.turn_on_light_with_scenario(
+            operations, repeat_count
+        )
+        self.__characteristic.write_value(data.buffer.byte_data)
+
+        if (data.data.total_duration_ms > 0):
+            self.__timer = set_timeout(
+                lambda: None, data.data.total_duration_ms
+            )
+
+    def turn_off_light(self):
+
+        if self.__timer:
+            clear_timeout(self.__timer)
+            self.__timer = None
+
+        data = self.__spec.turn_off_light()
+        self.__characteristic.write_value(data.buffer.byte_data)
 
 
 class MotorCharacteristic:
@@ -211,7 +252,6 @@ class MotorCharacteristic:
         self.__characteristic: GattCharacteristic = characteristic
         self.__spec = MotorSpec()
         self.__characteristic.start_notify(self.__on_data)
-        time.sleep(5)
         self.__event_emitter = ToioEventEmitter()
         self.__ble_protocol_version: Optional[str] = None
         self.__timer = None
@@ -232,7 +272,30 @@ class MotorCharacteristic:
             self.__timer = set_timeout(lambda: None, duration_ms)
 
     def move_to(self, targets, options):
+        print("not implemented")
         pass
+        """
+        if self.__ble_protocol_version != '2.1.0':
+            print("ble protocol version is old")
+
+        if self.__timer:
+            clear_timeout(self.__timer)
+            self.__timer = None
+
+        def create_handler(targets, options):
+
+            data = self.__spec.move_to(targets, options)
+
+            def handle_response(operation_id, reason):
+                if operation_id == data.data.options.operation_id:
+                    self.__event_emitter.remove_listener(
+                        'motor:response', handle_response
+                    )
+                if reason != 0 and reason != 5:
+                    print("error")
+            self.__characteristic.write_value(data.buffer.byte_data)
+            self.__event_emitter.on('motor:response', handle_response)
+        """
 
     def stop(self):
         self.move(0, 0, 0)
@@ -253,7 +316,72 @@ class SensorCharacteristic:
 
     def __init__(self, characteristic, eventEmitter):
         self.__characteristic: GattCharacteristic = characteristic
-        self.__event_emitter = eventEmitter
+        self.__spec: SensorSpec = SensorSpec()
+        self.__characteristic.start_notify(self.__on_data)
+        self.__event_emitter: ToioEventEmitter = eventEmitter
+        self.__prev_status: SensorTypeData = SensorTypeData()
+
+    def get_slope_status(self):
+        parsedData: SensorTypeData = self.__read()
+        return SensorTypeData(is_sloped=parsedData.data.is_sloped)
+
+    def get_collision_status(self):
+        parsedData: SensorTypeData = self.__read()
+        return SensorTypeData(is_collision_detected=parsedData.data.is_collision_detected)
+
+    def get_double_tap_status(self):
+        parsedData: SensorTypeData = self.__read()
+        return SensorTypeData(is_double_tapped=parsedData.data.is_double_tapped)
+
+    def get_orientation(self):
+        parsedData: SensorTypeData = self.__read()
+        return SensorTypeData(orientation=parsedData.data.orientation)
+
+    def __read(self):
+        try:
+            data = self.__characteristic.read_value()
+
+            if not data:
+                raise ToioException('cannot read any data from characteristic')
+
+            parsed_data = self.__spec.parse(Buffer(data))
+            return parsed_data
+        except Exception as e:
+            print(e)
+            return None
+
+    def __on_data(self, data):
+        try:
+            buffer = Buffer.from_data(data)
+            parsed_data = self.__spec.parse(buffer)
+
+            if self.__prev_status.is_sloped != parsed_data.data.is_sloped:
+                self.__event_emitter.emit(
+                    'sensor:slope', SensorTypeData(
+                        is_sloped=parsed_data.data.is_sloped
+                    )
+                )
+            if parsed_data.data.is_collision_detected:
+                self.__event_emitter.emit(
+                    'sensor:collision', SensorTypeData(
+                        is_collision_detected=parsed_data.data.is_collision_detected
+                    )
+                )
+            if parsed_data.data.is_double_tapped:
+                self.__event_emitter.emit(
+                    'sensor:double-tap', SensorTypeData(
+                        is_double_tapped=parsed_data.data.is_double_tapped
+                    )
+                )
+            if self.__prev_status.orientation != parsed_data.data.orientation:
+                self.__event_emitter.emit(
+                    'sensor:orientation', SensorTypeData(
+                        orientation=parsed_data.data.orientation
+                    )
+                )
+            self.__prev_status = parsed_data.data
+        except Exception as e:
+            print(e)
 
 
 class SoundCharacteristic:
@@ -261,3 +389,40 @@ class SoundCharacteristic:
 
     def __init__(self, characteristic):
         self.__characteristic: GattCharacteristic = characteristic
+        self.__spec: SoundSpec = SoundSpec()
+        self.__timer = None
+
+    def play_preset_sound(self, sound_id: int):
+
+        if self.__timer:
+            clear_timeout(self.__timer)
+            self.__timer = None
+
+        data = self.__spec.play_preset_sound(sound_id)
+        self.__characteristic.write_value(data.buffer.byte_data)
+
+        if (data.data.duration_ms > 0):
+            self.__timer = set_timeout(lambda: None, data.data.duration_ms)
+
+    def play_sound(self, operations: List[SoundOperation], repeat_count: int = 0):
+
+        if self.__timer:
+            clear_timeout(self.__timer)
+            self.__timer = None
+
+        data = self.__spec.play_sound(operations, repeat_count)
+        self.__characteristic.write_value(data.buffer.byte_data)
+
+        if (data.data.total_duration_ms > 0):
+            self.__timer = set_timeout(
+                lambda: None, data.data.total_duration_ms
+            )
+
+    def stop_sound(self):
+
+        if self.__timer:
+            clear_timeout(self.__timer)
+            self.__timer = None
+
+        data = self.__spec.stop_sound()
+        self.__characteristic.write_value(data.buffer.byte_data)

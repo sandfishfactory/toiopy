@@ -154,7 +154,7 @@ class LightSpec:
 
         return TurnOnLightWithScenarioType(buffer, arrange_data)
 
-    def turnOffLight(self) -> TurnOffLightType:
+    def turn_off_light(self) -> TurnOffLightType:
         return TurnOffLightType(Buffer.from_data([1]))
 
 
