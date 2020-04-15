@@ -70,11 +70,11 @@ class BatteryCharacteristic:
         except Exception as e:
             print(e)
 
-    def get_battery_status(self) -> BatteryTypeData:
-        data = self.__read()
-        return data.data
+    def get_battery_status(self) -> Optional[BatteryTypeData]:
+        data: Optional[BatteryType] = self.__read()
+        return data.data if data is not None else None
 
-    def __read(self) -> BatteryType:
+    def __read(self) -> Optional[BatteryType]:
         try:
             data = self.__characteristic.read_value()
 
@@ -104,11 +104,11 @@ class ButtonCharacteristic:
         except Exception as e:
             print(e)
 
-    def get_button_status(self) -> ButtonTypeData:
-        data = self.__read()
-        return data.data
+    def get_button_status(self) -> Optional[ButtonTypeData]:
+        data: Optional[ButtonType] = self.__read()
+        return data.data if data is not None else None
 
-    def __read(self) -> ButtonType:
+    def __read(self) -> Optional[ButtonType]:
         try:
             data = self.__characteristic.read_value()
 
@@ -210,10 +210,10 @@ class LightCharacteristic:
             clear_timeout(self.__timer)
             self.__timer = None
 
-        data = self.__spec.turn_on_light(operation)
+        data: TurnOnLightType = self.__spec.turn_on_light(operation)
         self.__characteristic.write_value(data.buffer.byte_data)
 
-        if (data.data.duration_ms > 0):
+        if data is not None and data.data is not None and data.data.duration_ms > 0:
             self.__timer = set_timeout(lambda: None, data.data.duration_ms)
 
     def turn_on_light_with_scenario(self, operations: List[LightOperation], repeat_count: int = 0):
@@ -230,7 +230,7 @@ class LightCharacteristic:
         )
         self.__characteristic.write_value(data.buffer.byte_data)
 
-        if (data.data.total_duration_ms > 0):
+        if data is not None and data.data is not None and data.data.total_duration_ms > 0:
             self.__timer = set_timeout(
                 lambda: None, data.data.total_duration_ms
             )
@@ -268,7 +268,7 @@ class MotorCharacteristic:
         data = self.__spec.move(left, right, duration_ms)
         self.__characteristic.write_value(data.buffer.byte_data)
 
-        if (data.data.duration_ms > 0):
+        if data.data.duration_ms > 0:
             self.__timer = set_timeout(lambda: None, duration_ms)
 
     def move_to(self, targets, options):
@@ -401,7 +401,7 @@ class SoundCharacteristic:
         data = self.__spec.play_preset_sound(sound_id)
         self.__characteristic.write_value(data.buffer.byte_data)
 
-        if (data.data.duration_ms > 0):
+        if data is not None and data.data is not None and data.data.duration_ms > 0:
             self.__timer = set_timeout(lambda: None, data.data.duration_ms)
 
     def play_sound(self, operations: List[SoundOperation], repeat_count: int = 0):
@@ -410,10 +410,10 @@ class SoundCharacteristic:
             clear_timeout(self.__timer)
             self.__timer = None
 
-        data = self.__spec.play_sound(operations, repeat_count)
+        data: PlaySoundType = self.__spec.play_sound(operations, repeat_count)
         self.__characteristic.write_value(data.buffer.byte_data)
 
-        if (data.data.total_duration_ms > 0):
+        if data is not None and data.data is not None and data.data.total_duration_ms > 0:
             self.__timer = set_timeout(
                 lambda: None, data.data.total_duration_ms
             )

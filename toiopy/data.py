@@ -58,7 +58,8 @@ C9,CS9,D9,DS9,E9,F9,FS9,G9,GS9,A9,AS9,B9,
 C10,CS10,D10,DS10,E10,F10,FS10,G10,
 NO_SOUND
 """
-Note = Enum('Note', names.replace('\n', ''), module=__name__,
+# mypyの不具合で機能APIのEnumはtype ignoreとする
+Note = Enum('Note', names.replace('\n', ''), module=__name__,  # type: ignore
             qualname='toiopy.data.Note', start=0)
 
 
@@ -77,7 +78,7 @@ class Buffer:
     def from_data(cls, data_array: List):
         size = len(data_array)
         byte_data = pack('B' * size, *data_array)
-        return cls(byte_data)
+        return cls(bytearray(byte_data))
 
     def read_uint8(self, offset: int):
         # unpackした結果はtupleになっている

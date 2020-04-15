@@ -122,7 +122,7 @@ class Cube:
         else:
             raise ToioException("light_characteristic is null")
 
-    def turn_on_light(self, operations: List[LightOperation], repeat_count: int = 0):
+    def turn_on_light_with_scenario(self, operations: List[LightOperation], repeat_count: int = 0):
         if self.__light_characteristic:
             return self.__light_characteristic.turn_on_light_with_scenario(operations, repeat_count)
         else:
@@ -179,14 +179,14 @@ class Cube:
             raise ToioException("sensor_characteristic is null")
 
     # button
-    def get_button_status(self) -> ButtonTypeData:
+    def get_button_status(self) -> Optional[ButtonTypeData]:
         if self.__button_characteristic:
             return self.__button_characteristic.get_button_status()
         else:
             raise ToioException("button_characteristic is null")
 
     # battery
-    def get_battery_status(self) -> BatteryTypeData:
+    def get_battery_status(self) -> Optional[BatteryTypeData]:
         if self.__battery_characteristic:
             return self.__battery_characteristic.get_battery_status()
         else:

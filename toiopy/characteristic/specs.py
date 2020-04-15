@@ -79,28 +79,34 @@ class IdSpec:
             if buffer.bytelength < 11:
                 raise ToioException("parse error")
             else:
-                data = PositionIdInfo(
-                    buffer.read_uint16le(1),
-                    buffer.read_uint16le(3),
-                    buffer.read_uint16le(5),
-                    buffer.read_uint16le(7),
-                    buffer.read_uint16le(9)
+                return PositionIdType(
+                    buffer,
+                    PositionIdInfo(
+                        buffer.read_uint16le(1),
+                        buffer.read_uint16le(3),
+                        buffer.read_uint16le(5),
+                        buffer.read_uint16le(7),
+                        buffer.read_uint16le(9)
+                    ),
+                    'id:position-id'
                 )
-                return PositionIdType(buffer, data, 'id:position-id')
         elif data_type == 2:
             if buffer.bytelength < 7:
                 raise ToioException("parse error")
             else:
-                data = StandardIdInfo(
-                    StandardId(buffer.read_uint32le(1)),
-                    buffer.read_uint16le(5)
+                return StandardIdType(
+                    buffer,
+                    StandardIdInfo(
+                        StandardId(buffer.read_uint32le(1)),
+                        buffer.read_uint16le(5)
+                    ),
+                    'id:standard-id'
                 )
-                return StandardIdType(buffer, data, 'id:standard-id')
         elif data_type == 3:
             return IdMissedType(buffer, 'id:position-id-missed')
 
         elif data_type == 2:
-            return IdMissedType(buffer, data, 'id:standard-id-missed')
+            return IdMissedType(buffer, 'id:standard-id-missed')
         else:
             raise ToioException("parse error")
 
@@ -108,7 +114,7 @@ class IdSpec:
 class LightSpec:
 
     def turn_on_light(self, operation: LightOperation) -> TurnOnLightType:
-        duration = clamp(operation.duration_ms / 10, 0, 255)
+        duration = clamp(int(operation.duration_ms / 10), 0, 255)
         red = clamp(operation.red, 0, 255)
         green = clamp(operation.green, 0, 255)
         blue = clamp(operation.blue, 0, 255)
@@ -122,7 +128,7 @@ class LightSpec:
             [], clamp(repeat_count, 0, 255), 0
         )
 
-        num_operations = min(operations.length, 29)
+        num_operations = min(len(operations), 29)
         buffer = Buffer.alloc(3 + 6 * num_operations)
         buffer.write_uint8(4, 0)
         buffer.write_uint8(arrange_data.repeat_count, 1)
@@ -132,7 +138,7 @@ class LightSpec:
 
         for i in range(num_operations):
             operation = operations[i]
-            duration = clamp(operation.duration_ms / 10, 0, 255)
+            duration = clamp(int(operation.duration_ms / 10), 0, 255)
             red = clamp(operation.red, 0, 255)
             green = clamp(operation.green, 0, 255)
             blue = clamp(operation.blue, 0, 255)
@@ -170,7 +176,7 @@ class MotorSpec:
         if buffer.bytelength != 3:
             raise ToioException("parse error")
 
-        type_data = buffer.readUInt8(0)
+        type_data = buffer.read_uint8(0)
 
         if type_data == 0x83 or type_data == 0x84:
             data = MotorResponseData(
@@ -190,7 +196,7 @@ class MotorSpec:
         l_power = min(abs(left), MotorSpec.MAX_SPEED)
         r_power = min(abs(right), MotorSpec.MAX_SPEED)
 
-        duration = clamp(duration_ms / 10, 0, 255)
+        duration = clamp(int(duration_ms / 10), 0, 255)
         buffer = Buffer.from_data(
             [2, 1, l_direction, l_power, 2, r_direction, r_power, duration]
         )
@@ -198,7 +204,7 @@ class MotorSpec:
         data = MoveTypeData(l_sign * l_power, r_sign * r_power, duration * 10)
         return MoveType(buffer, data)
 
-    def move_to(self, targets: List[MoveToTarget], options: MoveToOptions) -> MoveType:
+    def move_to(self, targets: List[MoveToTarget], options: MoveToOptions) -> MoveToType:
 
         operation_id = self.__tag.next()
         num_targets = min(
@@ -208,9 +214,9 @@ class MotorSpec:
         buffer.write_uint8(4, 0)
         buffer.write_uint8(operation_id, 1)
         buffer.write_uint8(options.timeout, 2)
-        buffer.write_uint8(options.moveType, 3)
-        buffer.write_uint8(options.maxSpeed, 4)
-        buffer.write_uint8(options.speedType, 5)
+        buffer.write_uint8(options.move_type, 3)
+        buffer.write_uint8(options.max_speed, 4)
+        buffer.write_uint8(options.speed_type, 5)
         buffer.write_uint8(0, 6)
         buffer.write_uint8(0 if options.overwrite else 1, 7)
 
@@ -233,8 +239,8 @@ class MotorSpec:
                 (rotate_type << 13) | angle, 12 + 6 * i)
 
         options.operation_id = operation_id
-        data = MoveToTypeData(target[0:num_targets], options)
-        return MoveType(buffer, data)
+        data = MoveToTypeData(targets[0:num_targets], options)
+        return MoveToType(buffer, data)
 
 
 class SensorSpec:
@@ -281,7 +287,7 @@ class SoundSpec:
 
         for i in range(num_operations):
             operation: SoundOperation = operations[i]
-            duration = clamp(operation.duration_ms / 10, 1, 255)
+            duration = clamp(int(operation.duration_ms / 10), 1, 255)
             note_name = operation.note_name
 
             total_duration_ms += duration
