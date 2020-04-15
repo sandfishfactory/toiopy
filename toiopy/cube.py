@@ -103,7 +103,7 @@ class Cube:
         else:
             raise ToioException("motor_characteristic is null")
 
-    def move_to(self, targets, options=MoveToOptions(0, 115, 0, 0, true)):
+    def move_to(self, targets, options=MoveToOptions(0, 115, 0, 0, True)):
         if self.__motor_characteristic:
             self.__motor_characteristic.move_to(targets, options)
         else:
