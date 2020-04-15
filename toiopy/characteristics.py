@@ -213,7 +213,7 @@ class LightCharacteristic:
         data: TurnOnLightType = self.__spec.turn_on_light(operation)
         self.__characteristic.write_value(data.buffer.byte_data)
 
-        if data.data.duration_ms > 0:
+        if data is not None and data.data is not None and data.data.duration_ms > 0:
             self.__timer = set_timeout(lambda: None, data.data.duration_ms)
 
     def turn_on_light_with_scenario(self, operations: List[LightOperation], repeat_count: int = 0):
@@ -230,7 +230,7 @@ class LightCharacteristic:
         )
         self.__characteristic.write_value(data.buffer.byte_data)
 
-        if data.data.total_duration_ms > 0:
+        if data is not None and data.data is not None and data.data.total_duration_ms > 0:
             self.__timer = set_timeout(
                 lambda: None, data.data.total_duration_ms
             )
@@ -401,7 +401,7 @@ class SoundCharacteristic:
         data = self.__spec.play_preset_sound(sound_id)
         self.__characteristic.write_value(data.buffer.byte_data)
 
-        if data.data.duration_ms > 0:
+        if data is not None and data.data is not None and data.data.duration_ms > 0:
             self.__timer = set_timeout(lambda: None, data.data.duration_ms)
 
     def play_sound(self, operations: List[SoundOperation], repeat_count: int = 0):
@@ -413,7 +413,7 @@ class SoundCharacteristic:
         data: PlaySoundType = self.__spec.play_sound(operations, repeat_count)
         self.__characteristic.write_value(data.buffer.byte_data)
 
-        if data.data.total_duration_ms > 0:
+        if data is not None and data.data is not None and data.data.total_duration_ms > 0:
             self.__timer = set_timeout(
                 lambda: None, data.data.total_duration_ms
             )
