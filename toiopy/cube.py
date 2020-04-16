@@ -13,7 +13,7 @@ from toiopy.data import (
     SoundOperation,
     ButtonTypeData,
     BatteryTypeData,
-    SensorTypeData
+    SensorTypeData,
 )
 from toiopy.characteristics import (
     BatteryCharacteristic,
@@ -23,13 +23,13 @@ from toiopy.characteristics import (
     LightCharacteristic,
     MotorCharacteristic,
     SensorCharacteristic,
-    SoundCharacteristic
+    SoundCharacteristic,
 )
 
 
 class Cube:
 
-    TOIO_SERVICE_ID = UUID('10b201005b3b45719508cf3efcd7bbae')
+    TOIO_SERVICE_ID = UUID("10b201005b3b45719508cf3efcd7bbae")
 
     __services = [TOIO_SERVICE_ID]
     __characteristics = [
@@ -40,7 +40,7 @@ class Cube:
         LightCharacteristic.UUID,
         MotorCharacteristic.UUID,
         SensorCharacteristic.UUID,
-        SoundCharacteristic.UUID
+        SoundCharacteristic.UUID,
     ]
 
     __battery_characteristic: Optional[BatteryCharacteristic] = None
@@ -55,7 +55,9 @@ class Cube:
         self.__sensor_characteristic: Optional[SensorCharacteristic] = None
         self.__button_characteristic: Optional[ButtonCharacteristic] = None
         self.__battery_characteristic: Optional[BatteryCharacteristic] = None
-        self.__configuration_characteristic: Optional[ConfigurationCharacteristic] = None
+        self.__configuration_characteristic: Optional[
+            ConfigurationCharacteristic
+        ] = None
 
     @property
     def id(self):
@@ -65,11 +67,8 @@ class Cube:
         try:
             self.__peripheral.connect()
             self.__peripheral.discover(self.__services, self.__characteristics)
-            service: GattService = self.__peripheral.find_service(
-                Cube.TOIO_SERVICE_ID
-            )
-            characteristics: List[GattCharacteristic] = \
-                service.list_characteristics()
+            service: GattService = self.__peripheral.find_service(Cube.TOIO_SERVICE_ID)
+            characteristics: List[GattCharacteristic] = service.list_characteristics()
             if characteristics:
                 self.__set_characteristics(characteristics)
 
@@ -122,9 +121,13 @@ class Cube:
         else:
             raise ToioException("light_characteristic is null")
 
-    def turn_on_light_with_scenario(self, operations: List[LightOperation], repeat_count: int = 0):
+    def turn_on_light_with_scenario(
+        self, operations: List[LightOperation], repeat_count: int = 0
+    ):
         if self.__light_characteristic:
-            return self.__light_characteristic.turn_on_light_with_scenario(operations, repeat_count)
+            return self.__light_characteristic.turn_on_light_with_scenario(
+                operations, repeat_count
+            )
         else:
             raise ToioException("light_characteristic is null")
 
@@ -154,25 +157,25 @@ class Cube:
             raise ToioException("sound_characteristic is null")
 
     # Sensor
-    def get_slope_status(self) -> SensorTypeData:
+    def get_slope_status(self) -> Optional[SensorTypeData]:
         if self.__sensor_characteristic:
             return self.__sensor_characteristic.get_slope_status()
         else:
             raise ToioException("sensor_characteristic is null")
 
-    def get_collision_status(self) -> SensorTypeData:
+    def get_collision_status(self) -> Optional[SensorTypeData]:
         if self.__sensor_characteristic:
             return self.__sensor_characteristic.get_collision_status()
         else:
             raise ToioException("sensor_characteristic is null")
 
-    def get_double_tap_status(self) -> SensorTypeData:
+    def get_double_tap_status(self) -> Optional[SensorTypeData]:
         if self.__sensor_characteristic:
             return self.__sensor_characteristic.get_double_tap_status()
         else:
             raise ToioException("sensor_characteristic is null")
 
-    def get_orientation(self) -> SensorTypeData:
+    def get_orientation(self) -> Optional[SensorTypeData]:
         if self.__sensor_characteristic:
             return self.__sensor_characteristic.get_orientation()
         else:
@@ -201,9 +204,7 @@ class Cube:
 
     def set_collision_threshold(self, threshold: int):
         if self.__configuration_characteristic:
-            self.__configuration_characteristic.set_collision_threshold(
-                threshold
-            )
+            self.__configuration_characteristic.set_collision_threshold(threshold)
         else:
             raise ToioException("configuration_characteristic is null")
 
@@ -216,41 +217,32 @@ class Cube:
 
             elif MotorCharacteristic.UUID == characteristic.uuid:
                 characteristic._peripheral = self.__peripheral
-                self.__motor_characteristic = MotorCharacteristic(
-                    characteristic
-                )
+                self.__motor_characteristic = MotorCharacteristic(characteristic)
 
             elif LightCharacteristic.UUID == characteristic.uuid:
 
-                self.__light_characteristic = LightCharacteristic(
-                    characteristic
-                )
+                self.__light_characteristic = LightCharacteristic(characteristic)
 
             elif SoundCharacteristic.UUID == characteristic.uuid:
 
-                self.__sound_characteristic = SoundCharacteristic(
-                    characteristic
-                )
+                self.__sound_characteristic = SoundCharacteristic(characteristic)
 
             elif SensorCharacteristic.UUID == characteristic.uuid:
 
                 self.__sensor_characteristic = SensorCharacteristic(
-                    characteristic,
-                    self.__event_emitter
+                    characteristic, self.__event_emitter
                 )
 
             elif ButtonCharacteristic.UUID == characteristic.uuid:
 
                 self.__button_characteristic = ButtonCharacteristic(
-                    characteristic,
-                    self.__event_emitter
+                    characteristic, self.__event_emitter
                 )
 
             elif BatteryCharacteristic.UUID == characteristic.uuid:
 
                 self.__battery_characteristic = BatteryCharacteristic(
-                    characteristic,
-                    self.__event_emitter
+                    characteristic, self.__event_emitter
                 )
 
             elif ConfigurationCharacteristic.UUID == characteristic.uuid:

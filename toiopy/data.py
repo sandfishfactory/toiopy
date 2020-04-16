@@ -1,7 +1,6 @@
 from typing import List, Any, Optional
 from struct import unpack_from, pack, pack_into
-from abc import ABCMeta
-from enum import Enum, auto
+from enum import Enum
 from pyee import BaseEventEmitter
 from queue import Queue
 
@@ -59,12 +58,16 @@ C10,CS10,D10,DS10,E10,F10,FS10,G10,
 NO_SOUND
 """
 # mypyの不具合で機能APIのEnumはtype ignoreとする
-Note = Enum('Note', names.replace('\n', ''), module=__name__,  # type: ignore
-            qualname='toiopy.data.Note', start=0)
+Note = Enum(  # type: ignore
+    "Note",
+    names.replace("\n", ""),
+    module=__name__,
+    qualname="toiopy.data.Note",
+    start=0,
+)
 
 
 class Buffer:
-
     def __init__(self, byte_data: bytearray):
         self.__byte_data = byte_data
         # 8bit符号なし整数（unsigned char）
@@ -77,28 +80,30 @@ class Buffer:
     @classmethod
     def from_data(cls, data_array: List):
         size = len(data_array)
-        byte_data = pack('B' * size, *data_array)
+        byte_data = pack("B" * size, *data_array)
         return cls(bytearray(byte_data))
 
     def read_uint8(self, offset: int):
         # unpackした結果はtupleになっている
-        return unpack_from('B', self.__byte_data, offset)[0]
+        return unpack_from("B", self.__byte_data, offset)[0]
 
     def read_uint16le(self, offset: int):
         # unpackした結果はtupleになっている
-        return unpack_from('<H', self.__byte_data, offset)[0]
+        return unpack_from("<H", self.__byte_data, offset)[0]
 
     def read_uint32le(self, offset: int):
         # unpackした結果はtupleになっている
-        return unpack_from('<I', self.__byte_data, offset)[0]
+        return unpack_from("<I", self.__byte_data, offset)[0]
 
     def write_uint8(self, value: int, offset: int):
-        return pack_into('B', self.__byte_data, offset, value)
+        return pack_into("B", self.__byte_data, offset, value)
 
     def write_uint16le(self, value: int, offset: int):
-        return pack_into('<H', self.__byte_data, offset, value)
+        return pack_into("<H", self.__byte_data, offset, value)
 
-    def to_str(self, encoding: str = 'utf-8', start: int = 0, end: Optional[int] = None):
+    def to_str(
+        self, encoding: str = "utf-8", start: int = 0, end: Optional[int] = None
+    ):
 
         if end is None:
             end = self.bytelength
@@ -130,28 +135,24 @@ class ToioEventEmitter(BaseEventEmitter):
 
 
 class DataType:
-
-    def __init__(self, buffer: Buffer, data: Any = None, data_type: str = ''):
+    def __init__(self, buffer: Buffer, data: Any = None, data_type: str = ""):
         self.buffer = buffer
         self.data = data
         self.data_type = data_type
 
 
 class BatteryTypeData:
-
     def __init__(self, level: int):
         self.level = level
 
 
 class ButtonTypeData:
-
     def __init__(self, id: int, pressed: bool):
         self.id = id
         self.pressed = pressed
 
 
 class PositionIdInfo:
-
     def __init__(self, x: int, y: int, angle: int, sensor_x: int, sensor_y: int):
         self.x = x
         self.y = y
@@ -161,14 +162,12 @@ class PositionIdInfo:
 
 
 class StandardIdInfo:
-
     def __init__(self, standard_id: StandardId, angle: int):
         self.standard_id = standard_id
         self.angle = angle
 
 
 class LightOperation:
-
     def __init__(self, duration_ms: int, red: int, green: int, blue: int):
         self.duration_ms = duration_ms
         self.red = red
@@ -177,22 +176,24 @@ class LightOperation:
 
 
 class TurnOnLightWithScenarioTypeData:
-
-    def __init__(self, operations: List[LightOperation], repeat_count: int, total_duration_ms: int):
+    def __init__(
+        self,
+        operations: List[LightOperation],
+        repeat_count: int,
+        total_duration_ms: int,
+    ):
         self.operations = operations
         self.repeat_count = repeat_count
         self.total_duration_ms = total_duration_ms
 
 
 class MotorResponseData:
-
     def __init__(self, operation_id: int, reason: int):
         self.operation_id = operation_id
         self.reason = reason
 
 
 class MoveTypeData:
-
     def __init__(self, left: int, right: int, duration_ms: int):
         self.left = left
         self.right = right
@@ -200,8 +201,13 @@ class MoveTypeData:
 
 
 class MoveToTarget:
-
-    def __init__(self, x: Optional[int], y: Optional[int], angle: Optional[int], rotate_type: Optional[int]):
+    def __init__(
+        self,
+        x: Optional[int],
+        y: Optional[int],
+        angle: Optional[int],
+        rotate_type: Optional[int],
+    ):
         self.x = x
         self.y = y
         self.angle = angle
@@ -209,8 +215,15 @@ class MoveToTarget:
 
 
 class MoveToOptions:
-
-    def __init__(self, move_type: int, max_speed: int, speed_type: int, timeout: int, overwrite: bool, operation_id: int = None):
+    def __init__(
+        self,
+        move_type: int,
+        max_speed: int,
+        speed_type: int,
+        timeout: int,
+        overwrite: bool,
+        operation_id: int = None,
+    ):
         self.move_type = move_type
         self.max_speed = max_speed
         self.speed_type = speed_type
@@ -220,20 +233,18 @@ class MoveToOptions:
 
 
 class MoveToTypeData:
-
     def __init__(self, targets: List[MoveToTarget], options: MoveToOptions):
         self.targets = targets
         self.options = options
 
 
 class SensorTypeData:
-
     def __init__(
         self,
         is_sloped: Optional[bool] = None,
         is_collision_detected: Optional[bool] = None,
         is_double_tapped: Optional[bool] = None,
-        orientation: Optional[int] = None
+        orientation: Optional[int] = None,
     ):
         self.is_sloped = is_sloped
         self.is_collision_detected = is_collision_detected
@@ -242,28 +253,29 @@ class SensorTypeData:
 
 
 class SoundOperation:
-
     def __init__(self, duration_ms: int, note_name):
         self.duration_ms = duration_ms
         self.note_name = note_name
 
 
 class PlayPresetSoundTypeData:
-
     def __init__(self, sound_id: int):
         self.sound_id = sound_id
 
 
 class PlaySoundTypeData:
-
-    def __init__(self, operations: List[SoundOperation], repeat_count: int, total_duration_ms: int):
+    def __init__(
+        self,
+        operations: List[SoundOperation],
+        repeat_count: int,
+        total_duration_ms: int,
+    ):
         self.operations = operations
         self.repeat_count = repeat_count
         self.total_duration_ms = total_duration_ms
 
 
 class BatteryType(DataType):
-
     def __init__(self, buffer: Buffer, data: BatteryTypeData, data_type: str):
         self.buffer = buffer
         self.data = data
@@ -271,7 +283,6 @@ class BatteryType(DataType):
 
 
 class ButtonType(DataType):
-
     def __init__(self, buffer: Buffer, data: ButtonTypeData, data_type: str):
         self.buffer = buffer
         self.data = data
@@ -279,7 +290,6 @@ class ButtonType(DataType):
 
 
 class PositionIdType(DataType):
-
     def __init__(self, buffer: Buffer, data: PositionIdInfo, data_type: str):
         self.buffer = buffer
         self.data = data
@@ -287,7 +297,6 @@ class PositionIdType(DataType):
 
 
 class StandardIdType(DataType):
-
     def __init__(self, buffer: Buffer, data: StandardIdInfo, data_type: str):
         self.buffer = buffer
         self.data = data
@@ -295,55 +304,47 @@ class StandardIdType(DataType):
 
 
 class IdMissedType(DataType):
-
     def __init__(self, buffer: Buffer, data_type: str):
         self.buffer = buffer
         self.data_type = data_type
 
 
 class TurnOnLightType(DataType):
-
     def __init__(self, buffer: Buffer, data: LightOperation):
         self.buffer = buffer
         self.data = data
 
 
 class TurnOnLightWithScenarioType(DataType):
-
     def __init__(self, buffer: Buffer, data: TurnOnLightWithScenarioTypeData):
         self.buffer = buffer
         self.data = data
 
 
 class TurnOffLightType(DataType):
-
     def __init__(self, buffer: Buffer):
         self.buffer = buffer
 
 
 class MotorResponse(DataType):
-
     def __init__(self, buffer: Buffer, data: MotorResponseData):
         self.buffer = buffer
         self.data = data
 
 
 class MoveType(DataType):
-
     def __init__(self, buffer: Buffer, data: MoveTypeData):
         self.buffer = buffer
         self.data = data
 
 
 class MoveToType(DataType):
-
     def __init__(self, buffer: Buffer, data: MoveToTypeData):
         self.buffer = buffer
         self.data = data
 
 
 class SensorType(DataType):
-
     def __init__(self, buffer: Buffer, data: SensorTypeData, data_type: str):
         self.buffer = buffer
         self.data = data
@@ -351,20 +352,17 @@ class SensorType(DataType):
 
 
 class PlayPresetSoundType(DataType):
-
     def __init__(self, buffer: Buffer, data: PlayPresetSoundTypeData):
         self.buffer = buffer
         self.data = data
 
 
 class PlaySoundType(DataType):
-
     def __init__(self, buffer: Buffer, data: PlaySoundTypeData):
         self.buffer = buffer
         self.data = data
 
 
 class StopSoundType(DataType):
-
     def __init__(self, buffer: Buffer):
         self.buffer = buffer

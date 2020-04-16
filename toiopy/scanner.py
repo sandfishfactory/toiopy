@@ -68,7 +68,7 @@ class NearestScanner(Scanner):
         self,
         provider,
         scan_window_ms: int = SCAN_WINDOW_MS,
-        timeout_ms: int = Scanner.DEFAULT_TIMEOUT_MS
+        timeout_ms: int = Scanner.DEFAULT_TIMEOUT_MS,
     ):
         super(NearestScanner, self).__init__(provider, timeout_ms)
         self.__scan_window_ms = scan_window_ms

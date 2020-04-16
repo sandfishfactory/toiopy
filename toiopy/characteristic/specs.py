@@ -1,8 +1,7 @@
-from typing import List
+from typing import List, Union
 
 from toiopy.data import (
     Buffer,
-    DataType,
     BatteryType,
     BatteryTypeData,
     ButtonType,
@@ -41,18 +40,16 @@ from toiopy.tag import createTagHandler
 
 
 class BatterySpec:
-
     def parse(self, buffer: Buffer) -> BatteryType:
         if buffer.bytelength < 1:
             raise ToioException("parse error")
 
         level = buffer.read_uint8(0)
         data = BatteryTypeData(level)
-        return BatteryType(buffer, data, 'battery:battery')
+        return BatteryType(buffer, data, "battery:battery")
 
 
 class ButtonSpec:
-
     def parse(self, buffer: Buffer) -> ButtonType:
         if buffer.bytelength < 2:
             raise ToioException("parse error")
@@ -64,12 +61,13 @@ class ButtonSpec:
 
         pressed = buffer.read_uint8(1) != 0
         data = ButtonTypeData(id, pressed)
-        return ButtonType(buffer, data, 'button:press')
+        return ButtonType(buffer, data, "button:press")
 
 
 class IdSpec:
-
-    def parse(self, buffer: Buffer) -> DataType:
+    def parse(
+        self, buffer: Buffer
+    ) -> Union[PositionIdType, StandardIdType, IdMissedType]:
         if buffer.bytelength < 1:
             raise ToioException("parse error")
 
@@ -86,9 +84,9 @@ class IdSpec:
                         buffer.read_uint16le(3),
                         buffer.read_uint16le(5),
                         buffer.read_uint16le(7),
-                        buffer.read_uint16le(9)
+                        buffer.read_uint16le(9),
                     ),
-                    'id:position-id'
+                    "id:position-id",
                 )
         elif data_type == 2:
             if buffer.bytelength < 7:
@@ -97,22 +95,20 @@ class IdSpec:
                 return StandardIdType(
                     buffer,
                     StandardIdInfo(
-                        StandardId(buffer.read_uint32le(1)),
-                        buffer.read_uint16le(5)
+                        StandardId(buffer.read_uint32le(1)), buffer.read_uint16le(5)
                     ),
-                    'id:standard-id'
+                    "id:standard-id",
                 )
         elif data_type == 3:
-            return IdMissedType(buffer, 'id:position-id-missed')
+            return IdMissedType(buffer, "id:position-id-missed")
 
         elif data_type == 2:
-            return IdMissedType(buffer, 'id:standard-id-missed')
+            return IdMissedType(buffer, "id:standard-id-missed")
         else:
             raise ToioException("parse error")
 
 
 class LightSpec:
-
     def turn_on_light(self, operation: LightOperation) -> TurnOnLightType:
         duration = clamp(int(operation.duration_ms / 10), 0, 255)
         red = clamp(operation.red, 0, 255)
@@ -123,7 +119,9 @@ class LightSpec:
         data = LightOperation(duration * 10, red, green, blue)
         return TurnOnLightType(Buffer.from_data(data_list), data)
 
-    def turn_on_light_with_scenario(self, operations: List[LightOperation], repeat_count: int) -> TurnOnLightWithScenarioType:
+    def turn_on_light_with_scenario(
+        self, operations: List[LightOperation], repeat_count: int
+    ) -> TurnOnLightWithScenarioType:
         arrange_data = TurnOnLightWithScenarioTypeData(
             [], clamp(repeat_count, 0, 255), 0
         )
@@ -156,7 +154,9 @@ class LightSpec:
             buffer.write_uint8(green, 7 + 6 * i)
             buffer.write_uint8(blue, 8 + 6 * i)
 
-        arrange_data.total_duration_ms = total_duration_ms * 10 * arrange_data.repeat_count
+        arrange_data.total_duration_ms = (
+            total_duration_ms * 10 * arrange_data.repeat_count
+        )
 
         return TurnOnLightWithScenarioType(buffer, arrange_data)
 
@@ -179,16 +179,14 @@ class MotorSpec:
         type_data = buffer.read_uint8(0)
 
         if type_data == 0x83 or type_data == 0x84:
-            data = MotorResponseData(
-                buffer.read_uint8(1), buffer.read_uint8(2)
-            )
+            data = MotorResponseData(buffer.read_uint8(1), buffer.read_uint8(2))
             return MotorResponse(buffer, data)
         else:
             raise ToioException("parse error")
 
     def move(self, left: int, right: int, duration_ms: int = 0) -> MoveType:
-        l_sign = 1 if left > 0 else - 1
-        r_sign = 1 if right > 0 else - 1
+        l_sign = 1 if left > 0 else -1
+        r_sign = 1 if right > 0 else -1
 
         l_direction = 1 if left > 0 else 2
         r_direction = 1 if right > 0 else 2
@@ -204,12 +202,12 @@ class MotorSpec:
         data = MoveTypeData(l_sign * l_power, r_sign * r_power, duration * 10)
         return MoveType(buffer, data)
 
-    def move_to(self, targets: List[MoveToTarget], options: MoveToOptions) -> MoveToType:
+    def move_to(
+        self, targets: List[MoveToTarget], options: MoveToOptions
+    ) -> MoveToType:
 
         operation_id = self.__tag.next()
-        num_targets = min(
-            len(targets), MotorSpec.NUMBER_OF_TARGETS_PER_OPERATION
-        )
+        num_targets = min(len(targets), MotorSpec.NUMBER_OF_TARGETS_PER_OPERATION)
         buffer = Buffer.alloc(8 + 6 * num_targets)
         buffer.write_uint8(4, 0)
         buffer.write_uint8(operation_id, 1)
@@ -222,21 +220,18 @@ class MotorSpec:
 
         for i in range(num_targets):
             target: MoveToTarget = targets[i]
-            x = target.x if target.x is not None else 0xffff
-            y = target.y if target.y is not None else 0xffff
+            x = target.x if target.x is not None else 0xFFFF
+            y = target.y if target.y is not None else 0xFFFF
 
-            angle = clamp(
-                target.angle if target.angle is not None else 0, 0, 0x1fff
-            )
+            angle = clamp(target.angle if target.angle is not None else 0, 0, 0x1FFF)
             rotate_type = target.rotate_type if target.rotate_type is not None else 0x00
 
-            if (target.angle is None and target.rotate_type != 0x06):
+            if target.angle is None and target.rotate_type != 0x06:
                 rotate_type = 0x05
 
             buffer.write_uint16le(x, 8 + 6 * i)
             buffer.write_uint16le(y, 10 + 6 * i)
-            buffer.write_uint16le(
-                (rotate_type << 13) | angle, 12 + 6 * i)
+            buffer.write_uint16le((rotate_type << 13) | angle, 12 + 6 * i)
 
         options.operation_id = operation_id
         data = MoveToTypeData(targets[0:num_targets], options)
@@ -244,7 +239,6 @@ class MotorSpec:
 
 
 class SensorSpec:
-
     def parse(self, buffer: Buffer) -> SensorType:
         if buffer.bytelength < 3:
             raise ToioException("parse error")
@@ -263,17 +257,18 @@ class SensorSpec:
             is_sloped, is_collision_detected, is_double_tapped, orientation
         )
 
-        return SensorType(buffer, data, 'sensor:detection')
+        return SensorType(buffer, data, "sensor:detection")
 
 
 class SoundSpec:
-
     def play_preset_sound(self, sound_id: int) -> PlayPresetSoundType:
         arranged_sound_id = clamp(sound_id, 0, 10)
         data = PlayPresetSoundTypeData(sound_id)
         return PlayPresetSoundType(Buffer.from_data([2, arranged_sound_id, 255]), data)
 
-    def play_sound(self, operations: List[SoundOperation], repeat_count: int) -> PlaySoundType:
+    def play_sound(
+        self, operations: List[SoundOperation], repeat_count: int
+    ) -> PlaySoundType:
         arrange_data = PlaySoundTypeData([], clamp(repeat_count, 0, 255), 0)
 
         num_operations = min(len(operations), 59)
@@ -298,7 +293,9 @@ class SoundSpec:
             buffer.write_uint8(note_name, 4 + 3 * i)
             buffer.write_uint8(255, 5 + 3 * i)
 
-        arrange_data.total_duration_ms = total_duration_ms * 10 * arrange_data.repeat_count
+        arrange_data.total_duration_ms = (
+            total_duration_ms * 10 * arrange_data.repeat_count
+        )
 
         return PlaySoundType(buffer, arrange_data)
 
