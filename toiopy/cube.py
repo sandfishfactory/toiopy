@@ -1,6 +1,5 @@
 from uuid import UUID
 from typing import Optional, List
-from time import sleep
 
 from Adafruit_BluefruitLE.interfaces.device import Device
 from Adafruit_BluefruitLE.interfaces.gatt import GattService, GattCharacteristic
@@ -25,6 +24,7 @@ from toiopy.characteristics import (
     SensorCharacteristic,
     SoundCharacteristic,
 )
+from toiopy.util import set_timeout
 
 
 class Cube:
@@ -250,7 +250,7 @@ class Cube:
                 self.__configuration_characteristic = ConfigurationCharacteristic(
                     characteristic
                 )
-        sleep(5)
+        set_timeout(lambda: None, 1000)
         print("set characteristics")
 
     def __init_characteristics(self, ble_protocol_version: str):
