@@ -13,11 +13,11 @@ class Scanner(ABC):
     DEFAULT_TIMEOUT_MS: int = 0
 
     def __init__(self, provider, timeout_ms: int = DEFAULT_TIMEOUT_MS):
-        self.__timout_ms = timeout_ms
-        self.__event_emitter: ToioEventEmitter = ToioEventEmitter()
+        self._timout_ms = timeout_ms
+        self._event_emitter: ToioEventEmitter = ToioEventEmitter()
 
-        self.__provider = provider
-        self.__peripherals: Union[Device, List[Device]] = None
+        self._provider = provider
+        self._peripherals: Union[Device, List[Device]] = None
 
     @classmethod
     def get_provider(cls):
@@ -26,24 +26,24 @@ class Scanner(ABC):
         return provider
 
     def start(self):
-        self.__provider.clear_cached_data()
-        adapter = self.__provider.get_default_adapter()
+        self._provider.clear_cached_data()
+        adapter = self._provider.get_default_adapter()
         adapter.power_on()
 
-        self.__provider.disconnect_devices([Cube.TOIO_SERVICE_ID])
+        self._provider.disconnect_devices([Cube.TOIO_SERVICE_ID])
 
         try:
             adapter.start_scan()
-            self.discover(self.__provider)
+            self.discover(self._provider)
         finally:
             adapter.stop_scan()
         return self.executor()
 
     def on(self, event, listener):
-        self.__event_emitter.on(event, listener)
+        self._event_emitter.on(event, listener)
 
     def off(self, event, listener):
-        self.__event_emitter.remove_listener(event, listener)
+        self._event_emitter.remove_listener(event, listener)
 
     @abstractmethod
     def discover(self):
@@ -65,8 +65,8 @@ class NearestScanner(Scanner):
         timeout_ms: int = Scanner.DEFAULT_TIMEOUT_MS,
     ):
         super(NearestScanner, self).__init__(provider, timeout_ms)
-        self.__scan_window_ms = scan_window_ms
-        self.__nearest_peripheral = None
+        self._scan_window_ms = scan_window_ms
+        self._nearest_peripheral = None
 
     def discover(self, provider):
         set_timeout(lambda: None, NearestScanner.SCAN_WINDOW_MS)
@@ -84,14 +84,14 @@ class NearestScanner(Scanner):
                 if not peripheral._rssi_read.wait(NearestScanner.SCAN_WINDOW_MS / 1000):
                     raise RuntimeError("Exceeded timeout waiting for RSSI value!")
                 if (
-                    self.__nearest_peripheral is None
-                    or peripheral._rssi > self.__nearest_peripheral._rssi
+                    self._nearest_peripheral is None
+                    or peripheral._rssi > self._nearest_peripheral._rssi
                 ):
-                    self.__nearest_peripheral = peripheral
+                    self._nearest_peripheral = peripheral
                 set_timeout(lambda: None, NearestScanner.SCAN_WINDOW_MS)
         print("discovered")
 
     def executor(self) -> Cube:
-        if self.__nearest_peripheral is None:
+        if self._nearest_peripheral is None:
             raise ToioException("Failed to find device")
-        return Cube(self.__nearest_peripheral)
+        return Cube(self._nearest_peripheral)
