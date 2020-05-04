@@ -69,13 +69,13 @@ Note = Enum(  # type: ignore
 
 class Buffer:
     def __init__(self, byte_data: bytearray):
-        self.__byte_data = byte_data
+        self._byte_data = byte_data
         # 8bit符号なし整数（unsigned char）
         self.bytelength = len(byte_data)
 
     @property
     def byte_data(self):
-        return bytearray(self.__byte_data)
+        return bytearray(self._byte_data)
 
     @classmethod
     def from_data(cls, data_array: List):
@@ -85,21 +85,21 @@ class Buffer:
 
     def read_uint8(self, offset: int):
         # unpackした結果はtupleになっている
-        return unpack_from("B", self.__byte_data, offset)[0]
+        return unpack_from("B", self._byte_data, offset)[0]
 
     def read_uint16le(self, offset: int):
         # unpackした結果はtupleになっている
-        return unpack_from("<H", self.__byte_data, offset)[0]
+        return unpack_from("<H", self._byte_data, offset)[0]
 
     def read_uint32le(self, offset: int):
         # unpackした結果はtupleになっている
-        return unpack_from("<I", self.__byte_data, offset)[0]
+        return unpack_from("<I", self._byte_data, offset)[0]
 
     def write_uint8(self, value: int, offset: int):
-        return pack_into("B", self.__byte_data, offset, value)
+        return pack_into("B", self._byte_data, offset, value)
 
     def write_uint16le(self, value: int, offset: int):
-        return pack_into("<H", self.__byte_data, offset, value)
+        return pack_into("<H", self._byte_data, offset, value)
 
     def to_str(
         self, encoding: str = "utf-8", start: int = 0, end: Optional[int] = None
@@ -108,7 +108,7 @@ class Buffer:
         if end is None:
             end = self.bytelength
 
-        return self.__byte_data[start:end].decode(encoding)
+        return self._byte_data[start:end].decode(encoding)
 
     @classmethod
     def alloc(cls, size: int):
@@ -125,13 +125,13 @@ class ToioEventEmitter(BaseEventEmitter):
 
     def __init__(self):
         super(ToioEventEmitter, self).__init__()
-        self.__queue = Queue()
+        self._queue = Queue()
 
     def put(self, item, block=True, timeout=_TIMEOUT_SEC):
-        self.__queue.put(item, block, timeout)
+        self._queue.put(item, block, timeout)
 
     def get(self, block=True, timeout=_TIMEOUT_SEC):
-        return self.__queue.get(block, timeout)
+        return self._queue.get(block, timeout)
 
 
 class DataType:
