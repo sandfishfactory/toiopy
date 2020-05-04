@@ -170,7 +170,7 @@ class MotorSpec:
     NUMBER_OF_TARGETS_PER_OPERATION = 29
 
     def __init__(self):
-        self.__tag = createTagHandler()
+        self._tag = createTagHandler()
 
     def parse(self, buffer: Buffer) -> MotorResponse:
         if buffer.bytelength != 3:
@@ -206,7 +206,7 @@ class MotorSpec:
         self, targets: List[MoveToTarget], options: MoveToOptions
     ) -> MoveToType:
 
-        operation_id = self.__tag.next()
+        operation_id = self._tag.next()
         num_targets = min(len(targets), MotorSpec.NUMBER_OF_TARGETS_PER_OPERATION)
         buffer = Buffer.alloc(8 + 6 * num_targets)
         buffer.write_uint8(4, 0)
